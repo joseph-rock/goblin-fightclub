@@ -1,6 +1,6 @@
 use rand::{thread_rng, Rng};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Dice {
     amount: u8,
     sides: u8,
@@ -8,6 +8,14 @@ struct Dice {
 }
 
 impl Dice {
+    fn new(amount: u8, sides: u8, modifier: u8) -> Dice {
+        Dice {
+            amount,
+            sides,
+            modifier,
+        }
+    }
+
     fn simple(sides: u8) -> Dice {
         Dice {
             amount: 1,
@@ -16,19 +24,18 @@ impl Dice {
         }
     }
 
-    fn parse(dice_str: &str) -> Dice {
-        todo!()
-    }
-
     fn roll(self) -> Option<u8> {
         if self.amount == 0 || self.sides == 0 {
             return None;
         }
-        let min = self.amount;
-        let max = self.sides * self.amount;
-
         let mut rng = thread_rng();
-        Some(rng.gen_range(min..=max) + self.modifier)
+        let mut total = 0;
+
+        for _ in 0..self.amount {
+            total += rng.gen_range(1..=self.sides);
+        }
+
+        Some(total + self.modifier)
     }
 }
 
@@ -55,5 +62,5 @@ impl CommonDice {
 }
 
 fn main() {
-    todo!();
+    todo!()
 }
