@@ -37,6 +37,14 @@ impl Dice {
 
         Some(total + self.modifier)
     }
+
+    fn description(self) -> String {
+        let desc = self.amount.to_string() + "d" + &self.sides.to_string();
+        if self.modifier == 0 {
+            return desc;
+        }
+        desc + " +" + &self.modifier.to_string()
+    }
 }
 
 enum CommonDice {
@@ -62,5 +70,5 @@ impl CommonDice {
 }
 
 fn main() {
-    todo!()
+    todo!();
 }
