@@ -7,12 +7,12 @@ struct RollResult {
 
 enum AttackResult {
     Hit {
-        goblin: Goblin,
+        defender: Goblin,
         roll: u8,
         roll_result: RollResult,
     },
     Miss {
-        goblin: Goblin,
+        defender: Goblin,
         roll: u8,
     },
 }
@@ -154,7 +154,7 @@ impl Goblin {
 
         if roll_to_hit < self.defense {
             return AttackResult::Miss {
-                goblin: self,
+                defender: self,
                 roll: roll_to_hit,
             };
         }
@@ -162,7 +162,7 @@ impl Goblin {
         let damage_roll = attacker.attack();
 
         AttackResult::Hit {
-            goblin: self.take_damage(damage_roll.total),
+            defender: self.take_damage(damage_roll.total),
             roll: roll_to_hit,
             roll_result: damage_roll,
         }
@@ -199,7 +199,7 @@ fn battle(attacker: Goblin, defender: Goblin) {
     let attack_result = defender.defend(&attacker);
     match attack_result {
         AttackResult::Hit {
-            goblin,
+            defender,
             roll,
             roll_result,
         } => {
@@ -207,17 +207,15 @@ fn battle(attacker: Goblin, defender: Goblin) {
                 "{} rolls {} - Hit for {}",
                 attacker.name, roll, roll_result.total
             );
-            let new_defender = goblin;
-            if new_defender.current_health <= 0 {
-                println!("{} died\n", new_defender.name);
+            if defender.current_health <= 0 {
+                println!("{} died\n", defender.name);
                 return ();
             }
-            return battle(new_defender, attacker);
+            return battle(defender, attacker);
         }
-        AttackResult::Miss { goblin, roll } => {
+        AttackResult::Miss { defender, roll } => {
             println!("{} rolls {} - Miss", attacker.name, roll);
-            let new_defender = goblin;
-            return battle(new_defender, attacker);
+            return battle(defender, attacker);
         }
     }
 }
