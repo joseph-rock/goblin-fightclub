@@ -24,18 +24,19 @@ impl Dice {
         }
     }
 
-    fn roll(self) -> Option<u8> {
+    fn roll(self) -> Option<RollResult> {
         if self.amount == 0 || self.sides == 0 {
             return None;
         }
         let mut rng = thread_rng();
-        let mut total = 0;
+        let mut rolls: Vec<u8> = Vec::new();
 
         for _ in 0..self.amount {
-            total += rng.gen_range(1..=self.sides);
+            rolls.push(rng.gen_range(1..=self.sides));
         }
 
-        Some(total + self.modifier)
+        let total = rolls.iter().fold(0, |sum, x| sum + x);
+        Some(RollResult { total, rolls })
     }
 
     fn description(self) -> String {
@@ -45,6 +46,11 @@ impl Dice {
         }
         desc + " +" + &self.modifier.to_string()
     }
+}
+
+struct RollResult {
+    total: u8,
+    rolls: Vec<u8>,
 }
 
 enum CommonDice {
