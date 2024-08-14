@@ -75,6 +75,39 @@ impl CommonDice {
     }
 }
 
+struct Weapon {
+    name: String,
+    attack_dice: Dice,
+}
+
+impl Weapon {
+    fn new(name: String, attack_dice: Dice) -> Weapon {
+        Weapon {name, attack_dice}
+    }
+}
+
+enum CommonWeapon {
+    Dagger,
+    Shortsword,
+    Warhammer,
+    Greatsword,
+    Halberd,
+    Greataxe
+}
+
+impl CommonWeapon {
+    fn new(self) -> Weapon {
+        match self {
+            CommonWeapon::Dagger => Weapon::new(String::from("Dagger"), CommonDice::D4.new()),
+            CommonWeapon::Shortsword => Weapon::new(String::from("Shortsword"), CommonDice::D6.new()),
+            CommonWeapon::Warhammer => Weapon::new(String::from("Warhammer"), CommonDice::D8.new()),
+            CommonWeapon::Greatsword => Weapon::new(String::from("Greatsword"), Dice::new(2, 6, 0)),
+            CommonWeapon::Halberd => Weapon::new(String::from("Halberd"), CommonDice::D10.new()),
+            CommonWeapon::Greataxe => Weapon::new(String::from("Greataxe"), CommonDice::D12.new()),
+        }
+    }
+}
+
 fn main() {
     todo!();
 }
