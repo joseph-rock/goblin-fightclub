@@ -53,28 +53,6 @@ struct RollResult {
     rolls: Vec<u8>,
 }
 
-enum CommonDice {
-    D4,
-    D6,
-    D8,
-    D10,
-    D12,
-    D20,
-}
-
-impl CommonDice {
-    fn new(self) -> Dice {
-        match self {
-            CommonDice::D4 => Dice::simple(4),
-            CommonDice::D6 => Dice::simple(6),
-            CommonDice::D8 => Dice::simple(8),
-            CommonDice::D10 => Dice::simple(10),
-            CommonDice::D12 => Dice::simple(12),
-            CommonDice::D20 => Dice::simple(20),
-        }
-    }
-}
-
 struct Weapon {
     name: String,
     attack_dice: Dice,
@@ -98,12 +76,12 @@ enum CommonWeapon {
 impl CommonWeapon {
     fn new(self) -> Weapon {
         match self {
-            CommonWeapon::Dagger => Weapon::new(String::from("Dagger"), CommonDice::D4.new()),
-            CommonWeapon::Shortsword => Weapon::new(String::from("Shortsword"), CommonDice::D6.new()),
-            CommonWeapon::Warhammer => Weapon::new(String::from("Warhammer"), CommonDice::D8.new()),
+            CommonWeapon::Dagger => Weapon::new(String::from("Dagger"), Dice::simple(4)),
+            CommonWeapon::Shortsword => Weapon::new(String::from("Shortsword"), Dice::simple(6)),
+            CommonWeapon::Warhammer => Weapon::new(String::from("Warhammer"), Dice::simple(8)),
             CommonWeapon::Greatsword => Weapon::new(String::from("Greatsword"), Dice::new(2, 6, 0)),
-            CommonWeapon::Halberd => Weapon::new(String::from("Halberd"), CommonDice::D10.new()),
-            CommonWeapon::Greataxe => Weapon::new(String::from("Greataxe"), CommonDice::D12.new()),
+            CommonWeapon::Halberd => Weapon::new(String::from("Halberd"), Dice::simple(10)),
+            CommonWeapon::Greataxe => Weapon::new(String::from("Greataxe"), Dice::simple(12)),
         }
     }
 }
