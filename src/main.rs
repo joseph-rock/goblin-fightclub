@@ -53,6 +53,7 @@ struct RollResult {
     rolls: Vec<u8>,
 }
 
+#[derive(Debug)]
 struct Weapon {
     name: String,
     attack_dice: Dice,
@@ -60,7 +61,23 @@ struct Weapon {
 
 impl Weapon {
     fn new(name: String, attack_dice: Dice) -> Weapon {
-        Weapon {name, attack_dice}
+        Weapon { name, attack_dice }
+    }
+
+    fn random_weapon() -> Weapon {
+        let max = 6;
+        let dice = Dice::simple(max);
+        let result = dice.roll().unwrap().total;
+
+        match result {
+            1 => CommonWeapon::Dagger.new(),
+            2 => CommonWeapon::Shortsword.new(),
+            3 => CommonWeapon::Warhammer.new(),
+            4 => CommonWeapon::Greatsword.new(),
+            5 => CommonWeapon::Halberd.new(),
+            6 => CommonWeapon::Greataxe.new(),
+            _ => CommonWeapon::Dagger.new(),
+        }
     }
 }
 
@@ -70,7 +87,7 @@ enum CommonWeapon {
     Warhammer,
     Greatsword,
     Halberd,
-    Greataxe
+    Greataxe,
 }
 
 impl CommonWeapon {
@@ -83,6 +100,91 @@ impl CommonWeapon {
             CommonWeapon::Halberd => Weapon::new(String::from("Halberd"), Dice::simple(10)),
             CommonWeapon::Greataxe => Weapon::new(String::from("Greataxe"), Dice::simple(12)),
         }
+    }
+}
+
+#[derive(Debug)]
+struct Goblin {
+    name: String,
+    max_health: u8,
+    current_health: i8,
+    weapon: Weapon,
+    defense: u8,
+    wins: u8,
+}
+
+impl Goblin {
+    fn attack(self) -> RollResult {
+        let roll = self.weapon.attack_dice.roll();
+        match roll {
+            Some(result) => result,
+            None => RollResult {
+                total: 1,
+                rolls: [1].to_vec(),
+            },
+        }
+    }
+
+    fn take_damage(self, damage: u8) -> Goblin {
+        Goblin {
+            name: self.name,
+            max_health: self.max_health,
+            current_health: self.current_health - (damage as i8),
+            weapon: self.weapon,
+            defense: self.defense,
+            wins: self.wins,
+        }
+    }
+
+    fn defend(self, attacker: Goblin) -> AttackResult {
+        let d20 = Dice::simple(20);
+        let roll = d20.roll().unwrap().total;
+
+        if roll < self.defense {
+            return AttackResult::Miss { goblin: self, roll };
+        }
+
+        let roll_result = attacker.attack();
+
+        AttackResult::Hit {
+            goblin: self.take_damage(roll_result.total),
+            roll,
+            roll_result,
+        }
+    }
+}
+
+enum AttackResult {
+    Hit {
+        goblin: Goblin,
+        roll: u8,
+        roll_result: RollResult,
+    },
+    Miss {
+        goblin: Goblin,
+        roll: u8,
+    },
+}
+
+fn birth_goblin(name: String) -> Goblin {
+    let health_dice = Dice::new(2, 20, 5);
+    let health = health_dice.roll().unwrap().total;
+
+    let defense_dice = Dice::simple(20);
+    let mut defense = defense_dice.roll().unwrap().total;
+    if defense > 18 {
+        defense = 18;
+    }
+
+    let weapon = Weapon::random_weapon();
+
+    Goblin {
+        name,
+        max_health: health,
+        current_health: health as i8,
+        weapon,
+        defense,
+        wins: 0,
     }
 }
 
