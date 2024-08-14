@@ -1,5 +1,22 @@
 use rand::{thread_rng, Rng};
 
+struct RollResult {
+    total: u8,
+    rolls: Vec<u8>,
+}
+
+enum AttackResult {
+    Hit {
+        goblin: Goblin,
+        roll: u8,
+        roll_result: RollResult,
+    },
+    Miss {
+        goblin: Goblin,
+        roll: u8,
+    },
+}
+
 #[derive(Clone, Copy, Debug)]
 struct Dice {
     amount: u8,
@@ -46,11 +63,6 @@ impl Dice {
         }
         desc + " +" + &self.modifier.to_string()
     }
-}
-
-struct RollResult {
-    total: u8,
-    rolls: Vec<u8>,
 }
 
 #[derive(Debug)]
@@ -138,32 +150,23 @@ impl Goblin {
 
     fn defend(self, attacker: Goblin) -> AttackResult {
         let d20 = Dice::simple(20);
-        let roll = d20.roll().unwrap().total;
+        let roll_to_hit = d20.roll().unwrap().total;
 
-        if roll < self.defense {
-            return AttackResult::Miss { goblin: self, roll };
+        if roll_to_hit < self.defense {
+            return AttackResult::Miss {
+                goblin: self,
+                roll: roll_to_hit,
+            };
         }
 
-        let roll_result = attacker.attack();
+        let damage_roll = attacker.attack();
 
         AttackResult::Hit {
-            goblin: self.take_damage(roll_result.total),
-            roll,
-            roll_result,
+            goblin: self.take_damage(damage_roll.total),
+            roll: roll_to_hit,
+            roll_result: damage_roll,
         }
     }
-}
-
-enum AttackResult {
-    Hit {
-        goblin: Goblin,
-        roll: u8,
-        roll_result: RollResult,
-    },
-    Miss {
-        goblin: Goblin,
-        roll: u8,
-    },
 }
 
 fn birth_goblin(name: String) -> Goblin {
