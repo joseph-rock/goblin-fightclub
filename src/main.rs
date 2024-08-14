@@ -65,7 +65,7 @@ impl Dice {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Weapon {
     name: String,
     attack_dice: Dice,
@@ -115,7 +115,7 @@ impl CommonWeapon {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Goblin {
     name: String,
     max_health: u8,
@@ -126,7 +126,7 @@ struct Goblin {
 }
 
 impl Goblin {
-    fn attack(self) -> RollResult {
+    fn attack(&self) -> RollResult {
         let roll = self.weapon.attack_dice.roll();
         match roll {
             Some(result) => result,
@@ -148,7 +148,7 @@ impl Goblin {
         }
     }
 
-    fn defend(self, attacker: Goblin) -> AttackResult {
+    fn defend(self, attacker: &Goblin) -> AttackResult {
         let d20 = Dice::simple(20);
         let roll_to_hit = d20.roll().unwrap().total;
 
@@ -191,6 +191,39 @@ fn birth_goblin(name: String) -> Goblin {
     }
 }
 
+fn battle(attacker: Goblin, defender: Goblin) {
+    println!("----------------------\n");
+    dbg!(&attacker, &defender);
+    println!("{} attacks {}", attacker.name, defender.name);
+
+    let attack_result = defender.defend(&attacker);
+    match attack_result {
+        AttackResult::Hit {
+            goblin,
+            roll,
+            roll_result,
+        } => {
+            println!(
+                "{} rolls {} - Hit for {}",
+                attacker.name, roll, roll_result.total
+            );
+            let new_defender = goblin;
+            if new_defender.current_health <= 0 {
+                println!("{} died\n", new_defender.name);
+                return ();
+            }
+            return battle(new_defender, attacker);
+        }
+        AttackResult::Miss { goblin, roll } => {
+            println!("{} rolls {} - Miss", attacker.name, roll);
+            let new_defender = goblin;
+            return battle(new_defender, attacker);
+        }
+    }
+}
+
 fn main() {
-    todo!();
+    let gob1 = birth_goblin(String::from("Gob 1"));
+    let gob2 = birth_goblin(String::from("Gob 2"));
+    battle(gob1, gob2)
 }
