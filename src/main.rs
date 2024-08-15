@@ -52,7 +52,7 @@ impl Dice {
             rolls.push(rng.gen_range(1..=self.sides));
         }
 
-        let total = rolls.iter().fold(0, |sum, x| sum + x);
+        let total = rolls.iter().fold(0, |sum, x| sum + x) + self.modifier;
         Some(RollResult { total, rolls })
     }
 
