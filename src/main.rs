@@ -56,6 +56,12 @@ impl Dice {
         Some(RollResult { total, rolls })
     }
 
+    // TODO: Add crit system
+    fn roll_d20(_diffuculty_score: &u8) -> u8 {
+        let d20 = Dice::simple(20);
+        d20.roll().unwrap().total
+    }
+
     fn description(self) -> String {
         let desc = self.amount.to_string() + "d" + &self.sides.to_string();
         if self.modifier == 0 {
@@ -149,8 +155,7 @@ impl Goblin {
     }
 
     fn defend(self, attacker: &Goblin) -> AttackResult {
-        let d20 = Dice::simple(20);
-        let roll_to_hit = d20.roll().unwrap().total;
+        let roll_to_hit = Dice::roll_d20(&self.defense);
 
         if roll_to_hit < self.defense {
             return AttackResult::Miss {
@@ -172,13 +177,7 @@ impl Goblin {
 fn birth_goblin(name: String) -> Goblin {
     let health_dice = Dice::new(2, 20, 5);
     let health = health_dice.roll().unwrap().total;
-
-    let defense_dice = Dice::simple(20);
-    let mut defense = defense_dice.roll().unwrap().total;
-    if defense > 18 {
-        defense = 18;
-    }
-
+    let defense = Dice::simple(18).roll().unwrap().total;
     let weapon = Weapon::random_weapon();
 
     Goblin {
