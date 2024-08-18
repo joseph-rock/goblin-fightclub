@@ -1,7 +1,15 @@
 [package]
-name = "goblin-fightclub"
+name = "goblin_fightclub"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "goblin_fightclub"
+path = "src/main.rs"
+
+[lib]
+name = "goblin_fightclub"
+path = "src/lib.rs"
 
 [dependencies]
 rand = "0.8.5"
