@@ -5,15 +5,15 @@ struct RollResult {
     rolls: Vec<u8>,
 }
 
-enum AttackResult {
+enum AttackRollResult {
     Hit {
         defender: Goblin,
-        roll: u8,
-        roll_result: RollResult,
+        d20_roll: RollResult,
+        damage_roll: RollResult,
     },
     Miss {
         defender: Goblin,
-        roll: u8,
+        d20_roll: RollResult,
     },
 }
 
@@ -57,9 +57,9 @@ impl Dice {
     }
 
     // TODO: Add crit system
-    fn roll_d20(_diffuculty_score: &u8) -> u8 {
+    fn roll_d20(_diffuculty_score: &u8) -> RollResult {
         let d20 = Dice::simple(20);
-        d20.roll().unwrap().total
+        d20.roll().unwrap()
     }
 
     fn description(self) -> String {
@@ -80,22 +80,6 @@ struct Weapon {
 impl Weapon {
     fn new(name: String, attack_dice: Dice) -> Weapon {
         Weapon { name, attack_dice }
-    }
-
-    fn random_weapon() -> Weapon {
-        let max = 6;
-        let dice = Dice::simple(max);
-        let result = dice.roll().unwrap().total;
-
-        match result {
-            1 => CommonWeapon::Dagger.new(),
-            2 => CommonWeapon::Shortsword.new(),
-            3 => CommonWeapon::Warhammer.new(),
-            4 => CommonWeapon::Greatsword.new(),
-            5 => CommonWeapon::Halberd.new(),
-            6 => CommonWeapon::Greataxe.new(),
-            _ => CommonWeapon::Dagger.new(),
-        }
     }
 }
 
@@ -121,6 +105,22 @@ impl CommonWeapon {
     }
 }
 
+fn random_weapon() -> Weapon {
+    let max = 6;
+    let dice = Dice::simple(max);
+    let result = dice.roll().unwrap().total;
+
+    match result {
+        1 => CommonWeapon::Dagger.new(),
+        2 => CommonWeapon::Shortsword.new(),
+        3 => CommonWeapon::Warhammer.new(),
+        4 => CommonWeapon::Greatsword.new(),
+        5 => CommonWeapon::Halberd.new(),
+        6 => CommonWeapon::Greataxe.new(),
+        _ => CommonWeapon::Dagger.new(),
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Goblin {
     name: String,
@@ -143,6 +143,25 @@ impl Goblin {
         }
     }
 
+    fn defend(self, attacker: &Goblin) -> AttackRollResult {
+        let d20_roll = Dice::roll_d20(&self.defense);
+
+        if d20_roll.total < self.defense {
+            return AttackRollResult::Miss {
+                defender: self,
+                d20_roll,
+            };
+        }
+
+        let damage_roll = attacker.attack();
+
+        AttackRollResult::Hit {
+            defender: self.take_damage(damage_roll.total),
+            d20_roll,
+            damage_roll,
+        }
+    }
+
     fn take_damage(self, damage: u8) -> Goblin {
         Goblin {
             name: self.name,
@@ -153,32 +172,13 @@ impl Goblin {
             wins: self.wins,
         }
     }
-
-    fn defend(self, attacker: &Goblin) -> AttackResult {
-        let roll_to_hit = Dice::roll_d20(&self.defense);
-
-        if roll_to_hit < self.defense {
-            return AttackResult::Miss {
-                defender: self,
-                roll: roll_to_hit,
-            };
-        }
-
-        let damage_roll = attacker.attack();
-
-        AttackResult::Hit {
-            defender: self.take_damage(damage_roll.total),
-            roll: roll_to_hit,
-            roll_result: damage_roll,
-        }
-    }
 }
 
 pub fn birth_goblin(name: String) -> Goblin {
     let health_dice = Dice::new(2, 20, 5);
     let health = health_dice.roll().unwrap().total;
     let defense = Dice::simple(18).roll().unwrap().total;
-    let weapon = Weapon::random_weapon();
+    let weapon = random_weapon();
 
     Goblin {
         name,
@@ -197,14 +197,14 @@ pub fn battle(attacker: Goblin, defender: Goblin) {
 
     let attack_result = defender.defend(&attacker);
     match attack_result {
-        AttackResult::Hit {
+        AttackRollResult::Hit {
             defender,
-            roll,
-            roll_result,
+            d20_roll,
+            damage_roll,
         } => {
             println!(
                 "{} rolls {} - Hit for {}",
-                attacker.name, roll, roll_result.total
+                attacker.name, d20_roll.total, damage_roll.total
             );
             if defender.current_health <= 0 {
                 println!("{} died\n", defender.name);
@@ -212,8 +212,8 @@ pub fn battle(attacker: Goblin, defender: Goblin) {
             }
             return battle(defender, attacker);
         }
-        AttackResult::Miss { defender, roll } => {
-            println!("{} rolls {} - Miss", attacker.name, roll);
+        AttackRollResult::Miss { defender, d20_roll } => {
+            println!("{} rolls {} - Miss", attacker.name, d20_roll.total);
             return battle(defender, attacker);
         }
     }
