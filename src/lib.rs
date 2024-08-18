@@ -57,7 +57,7 @@ impl Dice {
     }
 
     // TODO: Add crit system
-    fn roll_d20(_diffuculty_score: &u8) -> RollResult {
+    fn roll_d20() -> RollResult {
         let d20 = Dice::simple(20);
         d20.roll().unwrap()
     }
@@ -143,25 +143,6 @@ impl Goblin {
         }
     }
 
-    fn defend(self, attacker: &Goblin) -> AttackRollResult {
-        let d20_roll = Dice::roll_d20(&self.defense);
-
-        if d20_roll.total < self.defense {
-            return AttackRollResult::Miss {
-                defender: self,
-                d20_roll,
-            };
-        }
-
-        let damage_roll = attacker.attack();
-
-        AttackRollResult::Hit {
-            defender: self.take_damage(damage_roll.total),
-            d20_roll,
-            damage_roll,
-        }
-    }
-
     fn take_damage(self, damage: u8) -> Goblin {
         Goblin {
             name: self.name,
@@ -190,13 +171,32 @@ pub fn birth_goblin(name: String) -> Goblin {
     }
 }
 
-pub fn battle(attacker: Goblin, defender: Goblin) {
+fn attack_round(attacker: &Goblin, defender: Goblin) -> AttackRollResult {
+    let d20_roll = Dice::roll_d20();
+
+    if d20_roll.total < defender.defense {
+        return AttackRollResult::Miss {
+            defender: defender,
+            d20_roll,
+        };
+    }
+
+    let damage_roll = attacker.attack();
+
+    AttackRollResult::Hit {
+        defender: defender.take_damage(damage_roll.total),
+        d20_roll,
+        damage_roll,
+    }
+}
+
+pub fn battle(attacker: Goblin, defender: Goblin) -> Goblin {
     println!("----------------------\n");
     dbg!(&attacker, &defender);
     println!("{} attacks {}", attacker.name, defender.name);
 
-    let attack_result = defender.defend(&attacker);
-    match attack_result {
+    let attack_result = attack_round(&attacker, defender);
+    let defender = match attack_result {
         AttackRollResult::Hit {
             defender,
             d20_roll,
@@ -206,15 +206,17 @@ pub fn battle(attacker: Goblin, defender: Goblin) {
                 "{} rolls {} - Hit for {}",
                 attacker.name, d20_roll.total, damage_roll.total
             );
-            if defender.current_health <= 0 {
-                println!("{} died\n", defender.name);
-                return ();
-            }
-            return battle(defender, attacker);
+            defender
         }
         AttackRollResult::Miss { defender, d20_roll } => {
             println!("{} rolls {} - Miss", attacker.name, d20_roll.total);
-            return battle(defender, attacker);
+            defender
         }
+    };
+
+    if defender.current_health <= 0 {
+        println!("{} died\n", defender.name);
+        return attacker;
     }
+    battle(defender, attacker)
 }
