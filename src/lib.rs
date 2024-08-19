@@ -1,26 +1,14 @@
 use rand::{thread_rng, Rng};
 
-enum AttackRollResult {
-    Hit {
-        defender: Goblin,
-        d20_roll: u8,
-        damage_roll: u8,
-    },
-    Miss {
-        defender: Goblin,
-        d20_roll: u8,
-    },
-}
-
 #[derive(Clone, Copy, Debug)]
-struct Dice {
+pub struct Dice {
     amount: u8,
     sides: u8,
     modifier: u8,
 }
 
 impl Dice {
-    fn new(amount: u8, sides: u8, modifier: u8) -> Dice {
+    pub fn new(amount: u8, sides: u8, modifier: u8) -> Dice {
         Dice {
             amount,
             sides,
@@ -28,7 +16,7 @@ impl Dice {
         }
     }
 
-    fn simple(sides: u8) -> Dice {
+    pub fn simple(sides: u8) -> Dice {
         Dice {
             amount: 1,
             sides,
@@ -37,7 +25,7 @@ impl Dice {
     }
 
     // TODO: Rethink how to handle 0 amount/sides
-    fn roll(self) -> Option<u8> {
+    pub fn roll(self) -> Option<u8> {
         if self.amount == 0 || self.sides == 0 {
             return None;
         }
@@ -53,12 +41,12 @@ impl Dice {
     }
 
     // TODO: Add crit system
-    fn roll_d20() -> u8 {
+    pub fn roll_d20() -> u8 {
         let d20 = Dice::simple(20);
         d20.roll().unwrap()
     }
 
-    fn description(self) -> String {
+    pub fn description(self) -> String {
         let desc = self.amount.to_string() + "d" + &self.sides.to_string();
         if self.modifier == 0 {
             return desc;
@@ -68,9 +56,9 @@ impl Dice {
 }
 
 #[derive(Clone, Debug)]
-struct Weapon {
-    name: String,
-    attack_dice: Dice,
+pub struct Weapon {
+    pub name: String,
+    pub attack_dice: Dice,
 }
 
 impl Weapon {
@@ -119,16 +107,16 @@ fn random_weapon() -> Weapon {
 
 #[derive(Clone, Debug)]
 pub struct Goblin {
-    name: String,
-    max_health: u8,
-    current_health: i8,
-    weapon: Weapon,
-    defense: u8,
-    wins: u8,
+    pub name: String,
+    pub max_health: u8,
+    pub current_health: i8,
+    pub weapon: Weapon,
+    pub defense: u8,
+    pub wins: u8,
 }
 
 impl Goblin {
-    fn attack(&self) -> u8 {
+    pub fn attack(&self) -> u8 {
         let roll = self.weapon.attack_dice.roll();
         match roll {
             Some(result) => result,
@@ -136,7 +124,7 @@ impl Goblin {
         }
     }
 
-    fn take_damage(self, damage: u8) -> Goblin {
+    pub fn take_damage(self, damage: u8) -> Goblin {
         Goblin {
             name: self.name,
             max_health: self.max_health,
@@ -162,54 +150,4 @@ pub fn birth_goblin(name: String) -> Goblin {
         defense,
         wins: 0,
     }
-}
-
-fn attack_round(attacker: &Goblin, defender: Goblin) -> AttackRollResult {
-    let d20_roll = Dice::roll_d20();
-
-    if d20_roll < defender.defense {
-        return AttackRollResult::Miss {
-            defender: defender,
-            d20_roll,
-        };
-    }
-
-    let damage_roll = attacker.attack();
-
-    AttackRollResult::Hit {
-        defender: defender.take_damage(damage_roll),
-        d20_roll,
-        damage_roll,
-    }
-}
-
-pub fn battle(attacker: Goblin, defender: Goblin) -> Goblin {
-    println!("----------------------\n");
-    dbg!(&attacker, &defender);
-    println!("{} attacks {}", attacker.name, defender.name);
-
-    let attack_result = attack_round(&attacker, defender);
-    let defender = match attack_result {
-        AttackRollResult::Hit {
-            defender,
-            d20_roll,
-            damage_roll,
-        } => {
-            println!(
-                "{} rolls {} - Hit for {}",
-                attacker.name, d20_roll, damage_roll
-            );
-            defender
-        }
-        AttackRollResult::Miss { defender, d20_roll } => {
-            println!("{} rolls {} - Miss", attacker.name, d20_roll);
-            defender
-        }
-    };
-
-    if defender.current_health <= 0 {
-        println!("{} died\n", defender.name);
-        return attacker;
-    }
-    battle(defender, attacker)
 }
