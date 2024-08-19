@@ -1,19 +1,14 @@
 use rand::{thread_rng, Rng};
 
-struct RollResult {
-    total: u8,
-    rolls: Vec<u8>,
-}
-
 enum AttackRollResult {
     Hit {
         defender: Goblin,
-        d20_roll: RollResult,
-        damage_roll: RollResult,
+        d20_roll: u8,
+        damage_roll: u8,
     },
     Miss {
         defender: Goblin,
-        d20_roll: RollResult,
+        d20_roll: u8,
     },
 }
 
@@ -41,7 +36,8 @@ impl Dice {
         }
     }
 
-    fn roll(self) -> Option<RollResult> {
+    // TODO: Rethink how to handle 0 amount/sides
+    fn roll(self) -> Option<u8> {
         if self.amount == 0 || self.sides == 0 {
             return None;
         }
@@ -53,11 +49,11 @@ impl Dice {
         }
 
         let total = rolls.iter().fold(0, |sum, x| sum + x) + self.modifier;
-        Some(RollResult { total, rolls })
+        Some(total)
     }
 
     // TODO: Add crit system
-    fn roll_d20() -> RollResult {
+    fn roll_d20() -> u8 {
         let d20 = Dice::simple(20);
         d20.roll().unwrap()
     }
@@ -108,7 +104,7 @@ impl CommonWeapon {
 fn random_weapon() -> Weapon {
     let max = 6;
     let dice = Dice::simple(max);
-    let result = dice.roll().unwrap().total;
+    let result = dice.roll().unwrap();
 
     match result {
         1 => CommonWeapon::Dagger.new(),
@@ -132,14 +128,11 @@ pub struct Goblin {
 }
 
 impl Goblin {
-    fn attack(&self) -> RollResult {
+    fn attack(&self) -> u8 {
         let roll = self.weapon.attack_dice.roll();
         match roll {
             Some(result) => result,
-            None => RollResult {
-                total: 1,
-                rolls: [1].to_vec(),
-            },
+            None => 1,
         }
     }
 
@@ -157,8 +150,8 @@ impl Goblin {
 
 pub fn birth_goblin(name: String) -> Goblin {
     let health_dice = Dice::new(2, 20, 5);
-    let health = health_dice.roll().unwrap().total;
-    let defense = Dice::simple(18).roll().unwrap().total;
+    let health = health_dice.roll().unwrap();
+    let defense = Dice::simple(18).roll().unwrap();
     let weapon = random_weapon();
 
     Goblin {
@@ -174,7 +167,7 @@ pub fn birth_goblin(name: String) -> Goblin {
 fn attack_round(attacker: &Goblin, defender: Goblin) -> AttackRollResult {
     let d20_roll = Dice::roll_d20();
 
-    if d20_roll.total < defender.defense {
+    if d20_roll < defender.defense {
         return AttackRollResult::Miss {
             defender: defender,
             d20_roll,
@@ -184,7 +177,7 @@ fn attack_round(attacker: &Goblin, defender: Goblin) -> AttackRollResult {
     let damage_roll = attacker.attack();
 
     AttackRollResult::Hit {
-        defender: defender.take_damage(damage_roll.total),
+        defender: defender.take_damage(damage_roll),
         d20_roll,
         damage_roll,
     }
@@ -204,12 +197,12 @@ pub fn battle(attacker: Goblin, defender: Goblin) -> Goblin {
         } => {
             println!(
                 "{} rolls {} - Hit for {}",
-                attacker.name, d20_roll.total, damage_roll.total
+                attacker.name, d20_roll, damage_roll
             );
             defender
         }
         AttackRollResult::Miss { defender, d20_roll } => {
-            println!("{} rolls {} - Miss", attacker.name, d20_roll.total);
+            println!("{} rolls {} - Miss", attacker.name, d20_roll);
             defender
         }
     };
