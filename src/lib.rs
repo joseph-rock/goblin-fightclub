@@ -134,6 +134,17 @@ impl Goblin {
             wins: self.wins,
         }
     }
+
+    pub fn win(self) -> Goblin {
+        Goblin {
+            name: self.name,
+            max_health: self.max_health,
+            current_health: self.current_health,
+            weapon: self.weapon,
+            defense: self.defense,
+            wins: self.wins + 1,
+        }
+    }
 }
 
 pub fn birth_goblin(name: String) -> Goblin {
