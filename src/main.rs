@@ -17,50 +17,56 @@ fn battle(mut champion: Goblin, i: u8) -> Goblin {
     update_display(&champion, &challenger, &log);
 
     loop {
-        let champion_attack = Dice::roll_d20();
-        if champion_attack >= challenger.defense {
-            let champion_damage = champion.damage_roll();
-            challenger.take_damage(champion_damage);
-            log.push(format!(
-                "{} attacks - Roll {} - Hit for {}",
-                champion.name, champion_attack, champion_damage
-            ));
-            update_display(&champion, &challenger, &log);
-            if challenger.current_health <= 0 {
-                log.push(format!("{} Died", challenger.name));
-                update_display(&champion, &challenger, &log);
-                champion.win();
-                return champion;
+        let champion_attack = champion.attack(&challenger);
+        let _ = match champion_attack {
+            AttackResult::Hit {
+                attack_roll: ar,
+                damage_roll: dr,
+            } => {
+                challenger.take_damage(dr);
+                log.push(format!("{} rolls {ar} - Hit for {dr}", champion.name));
             }
-        } else {
-            log.push(format!(
-                "{} attacks - Roll {} - Miss",
-                champion.name, champion_attack
-            ));
+            AttackResult::Crit { damage_roll: dr } => {
+                challenger.take_damage(dr);
+                log.push(format!("{} Critical Hit! for {dr}", champion.name));
+            }
+            AttackResult::Miss { attack_roll: ar } => {
+                log.push(format!("{} rolls {ar} - Miss", champion.name));
+            }
+        };
+        update_display(&champion, &challenger, &log);
+
+        if challenger.current_health <= 0 {
+            log.push(format!("{} Died", challenger.name));
             update_display(&champion, &challenger, &log);
+            champion.win();
+            return champion;
         }
 
-        let challenger_attack = Dice::roll_d20();
-        if challenger_attack >= champion.defense {
-            let challenger_damage = challenger.damage_roll();
-            champion.take_damage(challenger_damage);
-            log.push(format!(
-                "{} attacks - Roll {} - Hit for {}",
-                challenger.name, challenger_attack, challenger_damage
-            ));
-            update_display(&champion, &challenger, &log);
-            if champion.current_health <= 0 {
-                log.push(format!("{} Died", champion.name));
-                update_display(&champion, &challenger, &log);
-                challenger.win();
-                return challenger;
+        let challenger_attack = challenger.attack(&champion);
+        let _ = match challenger_attack {
+            AttackResult::Hit {
+                attack_roll: ar,
+                damage_roll: dr,
+            } => {
+                champion.take_damage(dr);
+                log.push(format!("{} rolls {ar} - Hit for {dr}", challenger.name));
             }
-        } else {
-            log.push(format!(
-                "{} attacks - Roll {} - Miss",
-                challenger.name, challenger_attack
-            ));
+            AttackResult::Crit { damage_roll: dr } => {
+                champion.take_damage(dr);
+                log.push(format!("{} Critical Hit! for {dr}", challenger.name));
+            }
+            AttackResult::Miss { attack_roll: ar } => {
+                log.push(format!("{} rolls {ar} - Miss", challenger.name));
+            }
+        };
+        update_display(&champion, &challenger, &log);
+
+        if champion.current_health <= 0 {
+            log.push(format!("{} Died", champion.name));
             update_display(&champion, &challenger, &log);
+            challenger.win();
+            return challenger;
         }
     }
 }
@@ -81,16 +87,15 @@ fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> 
 }
 
 fn print_header(left: &Goblin, right: &Goblin) -> () {
+    let lweapon = left.weapon.attack_dice.description();
+    let rweapon = right.weapon.attack_dice.description();
+
     println!("{:<15} |   {:<15}", left.name, right.name);
     println!("{:<15} |   {:<15}", fmt_wins(left), fmt_wins(right));
     println!("{:<15} |   {:<15}", fmt_hp(left), fmt_hp(right));
     println!("{:<15} |   {:<15}", fmt_def(left), fmt_def(right));
     println!("{:<15} |   {:<15}", left.weapon.name, right.weapon.name);
-    println!(
-        "{:<15} |   {:<15}",
-        left.weapon.attack_dice.description(),
-        right.weapon.attack_dice.description()
-    );
+    println!("{:<15} |   {:<15}", lweapon, rweapon);
     println!();
 }
 

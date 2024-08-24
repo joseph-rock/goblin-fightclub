@@ -24,7 +24,6 @@ impl Dice {
         }
     }
 
-    // TODO: Rethink how to handle 0 amount/sides
     pub fn roll(self) -> Option<u8> {
         if self.amount == 0 || self.sides == 0 {
             return None;
@@ -40,7 +39,6 @@ impl Dice {
         Some(total)
     }
 
-    // TODO: Add crit system
     pub fn roll_d20() -> u8 {
         let d20 = Dice::simple(20);
         d20.roll().unwrap()
@@ -116,6 +114,29 @@ pub struct Goblin {
 }
 
 impl Goblin {
+    pub fn attack(&self, defender: &Goblin) -> AttackResult {
+        let attack_roll = Dice::roll_d20();
+        if attack_roll < defender.defense {
+            return AttackResult::Miss { attack_roll };
+        }
+
+        let damage_roll = self.damage_roll();
+
+        if attack_roll == 20 {
+            let crit_attack_roll = Dice::roll_d20();
+            if crit_attack_roll >= defender.defense {
+                let crit_damage_roll = self.damage_roll();
+                let total = damage_roll + crit_damage_roll;
+                return AttackResult::Crit { damage_roll: total };
+            }
+        }
+
+        AttackResult::Hit {
+            attack_roll,
+            damage_roll,
+        }
+    }
+
     pub fn damage_roll(&self) -> u8 {
         let roll = self.weapon.attack_dice.roll();
         match roll {
@@ -147,4 +168,10 @@ pub fn birth_goblin(name: String) -> Goblin {
         defense,
         wins: 0,
     }
+}
+
+pub enum AttackResult {
+    Miss { attack_roll: u8 },
+    Hit { attack_roll: u8, damage_roll: u8 },
+    Crit { damage_roll: u8 },
 }
