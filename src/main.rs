@@ -2,89 +2,74 @@ use goblin_fightclub::*;
 use std::{thread, time};
 
 fn main() {
-    let seed = birth_goblin(String::from("Gob 0"));
-    game_loop(seed, 1);
-    ()
+    let mut champion = birth_goblin(String::from("Gob 0"));
+    let mut i = 1;
+
+    loop {
+        champion = battle(champion, i);
+        i += 1;
+    }
 }
 
-fn game_loop(champion: Goblin, i: u8) -> () {
-    let challenger = birth_goblin(format!("Gob {i}"));
-    let champion = battle(champion, challenger);
-    game_loop(champion, i + 1);
-}
-
-fn battle(attacker: Goblin, defender: Goblin) -> Goblin {
+fn battle(mut champion: Goblin, i: u8) -> Goblin {
+    let mut challenger = birth_goblin(format!("Gob {i}"));
     let mut log: Vec<String> = Vec::new();
+    update_display(&champion, &challenger, &log);
 
-    let attack_dialog = format!("{} attacks {}", attacker.name, defender.name);
-    log.push(attack_dialog);
-    display(&attacker, &defender, &log);
-
-    let attack_result = attack_round(&attacker, defender);
-    let defender = match attack_result {
-        AttackRollResult::Hit {
-            defender,
-            d20_roll,
-            damage_roll,
-        } => {
-            let hit_dialog = format!(
-                "{} rolls {} - Hit for {}",
-                attacker.name, d20_roll, damage_roll
-            );
-            log.push(hit_dialog);
-            display(&attacker, &defender, &log);
-            defender
+    loop {
+        let champion_attack = Dice::roll_d20();
+        if champion_attack >= challenger.defense {
+            let champion_damage = champion.damage_roll();
+            challenger.take_damage(champion_damage);
+            log.push(format!(
+                "{} attacks - Roll {} - Hit for {}",
+                champion.name, champion_attack, champion_damage
+            ));
+            update_display(&champion, &challenger, &log);
+            if challenger.current_health <= 0 {
+                log.push(format!("{} Died", challenger.name));
+                update_display(&champion, &challenger, &log);
+                champion.win();
+                return champion;
+            }
+        } else {
+            log.push(format!(
+                "{} attacks - Roll {} - Miss",
+                champion.name, champion_attack
+            ));
+            update_display(&champion, &challenger, &log);
         }
-        AttackRollResult::Miss { defender, d20_roll } => {
-            let miss_dialog = format!("{} rolls {} - Miss", attacker.name, d20_roll);
-            log.push(miss_dialog);
-            display(&attacker, &defender, &log);
-            defender
+
+        let challenger_attack = Dice::roll_d20();
+        if challenger_attack >= champion.defense {
+            let challenger_damage = challenger.damage_roll();
+            champion.take_damage(challenger_damage);
+            log.push(format!(
+                "{} attacks - Roll {} - Hit for {}",
+                challenger.name, challenger_attack, challenger_damage
+            ));
+            update_display(&champion, &challenger, &log);
+            if champion.current_health <= 0 {
+                log.push(format!("{} Died", champion.name));
+                update_display(&champion, &challenger, &log);
+                challenger.win();
+                return challenger;
+            }
+        } else {
+            log.push(format!(
+                "{} attacks - Roll {} - Miss",
+                challenger.name, challenger_attack
+            ));
+            update_display(&champion, &challenger, &log);
         }
-    };
-
-    if defender.current_health <= 0 {
-        let death = format!("{} died\n", defender.name);
-        log.push(death);
-        display(&attacker, &defender, &log);
-        return attacker.win();
     }
-    battle(defender, attacker)
-}
-
-fn attack_round(attacker: &Goblin, defender: Goblin) -> AttackRollResult {
-    let d20_roll = Dice::roll_d20();
-
-    if d20_roll < defender.defense {
-        return AttackRollResult::Miss { defender, d20_roll };
-    }
-
-    let damage_roll = attacker.attack();
-
-    AttackRollResult::Hit {
-        defender: defender.take_damage(damage_roll),
-        d20_roll,
-        damage_roll,
-    }
-}
-
-pub enum AttackRollResult {
-    Hit {
-        defender: Goblin,
-        d20_roll: u8,
-        damage_roll: u8,
-    },
-    Miss {
-        defender: Goblin,
-        d20_roll: u8,
-    },
 }
 
 fn clear() -> () {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-fn display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> () {
+fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> () {
     let pause_len = time::Duration::from_millis(1000);
     let pause = || thread::sleep(pause_len);
     clear();
@@ -96,26 +81,8 @@ fn display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> () {
 }
 
 fn print_header(left: &Goblin, right: &Goblin) -> () {
-    let mut left = left;
-    let mut right = right;
-    let mut foo = left;
-
-    if left.wins == right.wins {
-        if left.name < right.name {
-            foo = right;
-            right = left;
-            left = foo;
-        }
-    }
-
-    if right.wins > left.wins {
-        foo = left;
-        left = right;
-        right = foo;
-    }
-
     println!("{:<15} |   {:<15}", left.name, right.name);
-    println!("{:<15} |   {:<15}", left.wins, right.wins);
+    println!("{:<15} |   {:<15}", fmt_wins(left), fmt_wins(right));
     println!("{:<15} |   {:<15}", fmt_hp(left), fmt_hp(right));
     println!("{:<15} |   {:<15}", fmt_def(left), fmt_def(right));
     println!("{:<15} |   {:<15}", left.weapon.name, right.weapon.name);
@@ -125,6 +92,10 @@ fn print_header(left: &Goblin, right: &Goblin) -> () {
         right.weapon.attack_dice.description()
     );
     println!();
+}
+
+fn fmt_wins(gob: &Goblin) -> String {
+    "Wins: ".to_owned() + &gob.wins.to_string()
 }
 
 fn fmt_hp(gob: &Goblin) -> String {

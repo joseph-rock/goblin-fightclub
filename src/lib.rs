@@ -116,7 +116,7 @@ pub struct Goblin {
 }
 
 impl Goblin {
-    pub fn attack(&self) -> u8 {
+    pub fn damage_roll(&self) -> u8 {
         let roll = self.weapon.attack_dice.roll();
         match roll {
             Some(result) => result,
@@ -124,26 +124,12 @@ impl Goblin {
         }
     }
 
-    pub fn take_damage(self, damage: u8) -> Goblin {
-        Goblin {
-            name: self.name,
-            max_health: self.max_health,
-            current_health: self.current_health - (damage as i8),
-            weapon: self.weapon,
-            defense: self.defense,
-            wins: self.wins,
-        }
+    pub fn take_damage(&mut self, damage: u8) -> () {
+        self.current_health -= damage as i8;
     }
 
-    pub fn win(self) -> Goblin {
-        Goblin {
-            name: self.name,
-            max_health: self.max_health,
-            current_health: self.current_health,
-            weapon: self.weapon,
-            defense: self.defense,
-            wins: self.wins + 1,
-        }
+    pub fn win(&mut self) -> () {
+        self.wins += 1;
     }
 }
 
