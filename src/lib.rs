@@ -116,7 +116,7 @@ pub struct Goblin {
 impl Goblin {
     pub fn attacks(&self, defender: &Goblin) -> AttackResult {
         let attack_roll = Dice::roll_d20();
-        if attack_roll < defender.defense {
+        if attack_roll < defender.defense && attack_roll != 20 {
             return AttackResult::Miss { attack_roll };
         }
 
@@ -124,7 +124,7 @@ impl Goblin {
 
         if attack_roll == 20 {
             let crit_attack_roll = Dice::roll_d20();
-            if crit_attack_roll >= defender.defense {
+            if crit_attack_roll >= defender.defense || crit_attack_roll == 20 {
                 let crit_damage_roll = self.damage_roll();
                 let total = damage_roll + crit_damage_roll;
                 return AttackResult::Crit { damage_roll: total };
