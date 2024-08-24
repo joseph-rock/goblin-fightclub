@@ -1,32 +1,33 @@
-use goblin_fightclub::*;
+use goblin_fightclub::{birth_goblin, AttackResult, Goblin};
 use std::{thread, time};
 
 fn main() {
     let mut champion = birth_goblin(String::from("Gob 0"));
-    let mut i = 1;
+    let mut generation = 1;
 
     loop {
-        champion = battle(champion, i);
-        i += 1;
+        champion = battle(champion, generation);
+        generation += 1;
         pause();
     }
 }
 
-fn battle(mut champion: Goblin, i: u8) -> Goblin {
-    let mut challenger = birth_goblin(format!("Gob {i}"));
-    let mut log: Vec<String> = Vec::new();
+fn battle(mut champion: Goblin, generation: u8) -> Goblin {
+    let mut challenger = birth_goblin(format!("Gob {generation}"));
+    let mut log = Vec::<String>::new();
+
     update_display(&champion, &challenger, &log);
 
     loop {
-        let is_killing_blow = attack_log(&mut champion, &mut challenger, &mut log);
+        let champion_won: bool = attack_log(&mut champion, &mut challenger, &mut log);
         update_display(&champion, &challenger, &log);
-        if is_killing_blow {
+        if champion_won {
             return champion;
         }
 
-        let is_killing_blow = attack_log(&mut challenger, &mut champion, &mut log);
+        let challenger_won: bool = attack_log(&mut challenger, &mut champion, &mut log);
         update_display(&champion, &challenger, &log);
-        if is_killing_blow {
+        if challenger_won {
             return challenger;
         }
     }
