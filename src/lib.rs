@@ -8,7 +8,7 @@ pub struct Dice {
 }
 
 impl Dice {
-    pub fn new(amount: u8, sides: u8, modifier: u8) -> Dice {
+    fn new(amount: u8, sides: u8, modifier: u8) -> Dice {
         Dice {
             amount,
             sides,
@@ -16,7 +16,7 @@ impl Dice {
         }
     }
 
-    pub fn simple(sides: u8) -> Dice {
+    fn simple(sides: u8) -> Dice {
         Dice {
             amount: 1,
             sides,
@@ -24,7 +24,7 @@ impl Dice {
         }
     }
 
-    pub fn roll(self) -> Option<u8> {
+    fn roll(self) -> Option<u8> {
         if self.amount == 0 || self.sides == 0 {
             return None;
         }
@@ -39,7 +39,7 @@ impl Dice {
         Some(total)
     }
 
-    pub fn roll_d20() -> u8 {
+    fn roll_d20() -> u8 {
         let d20 = Dice::simple(20);
         d20.roll().unwrap()
     }
@@ -114,7 +114,7 @@ pub struct Goblin {
 }
 
 impl Goblin {
-    pub fn attack(&self, defender: &Goblin) -> AttackResult {
+    pub fn attacks(&self, defender: &Goblin) -> AttackResult {
         let attack_roll = Dice::roll_d20();
         if attack_roll < defender.defense {
             return AttackResult::Miss { attack_roll };
@@ -137,7 +137,7 @@ impl Goblin {
         }
     }
 
-    pub fn damage_roll(&self) -> u8 {
+    fn damage_roll(&self) -> u8 {
         let roll = self.weapon.attack_dice.roll();
         match roll {
             Some(result) => result,
