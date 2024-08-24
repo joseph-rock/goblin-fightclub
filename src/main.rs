@@ -8,6 +8,7 @@ fn main() {
     loop {
         champion = battle(champion, i);
         i += 1;
+        pause();
     }
 }
 
@@ -17,67 +18,58 @@ fn battle(mut champion: Goblin, i: u8) -> Goblin {
     update_display(&champion, &challenger, &log);
 
     loop {
-        let champion_attack = champion.attack(&challenger);
-        let _ = match champion_attack {
-            AttackResult::Hit {
-                attack_roll: ar,
-                damage_roll: dr,
-            } => {
-                challenger.take_damage(dr);
-                log.push(format!("{} rolls {ar} - Hit for {dr}", champion.name));
-            }
-            AttackResult::Crit { damage_roll: dr } => {
-                challenger.take_damage(dr);
-                log.push(format!("{} Critical Hit! for {dr}", champion.name));
-            }
-            AttackResult::Miss { attack_roll: ar } => {
-                log.push(format!("{} rolls {ar} - Miss", champion.name));
-            }
-        };
+        let is_killing_blow = attack_log(&mut champion, &mut challenger, &mut log);
         update_display(&champion, &challenger, &log);
-
-        if challenger.current_health <= 0 {
-            log.push(format!("{} Died", challenger.name));
-            update_display(&champion, &challenger, &log);
-            champion.win();
+        if is_killing_blow {
             return champion;
         }
 
-        let challenger_attack = challenger.attack(&champion);
-        let _ = match challenger_attack {
-            AttackResult::Hit {
-                attack_roll: ar,
-                damage_roll: dr,
-            } => {
-                champion.take_damage(dr);
-                log.push(format!("{} rolls {ar} - Hit for {dr}", challenger.name));
-            }
-            AttackResult::Crit { damage_roll: dr } => {
-                champion.take_damage(dr);
-                log.push(format!("{} Critical Hit! for {dr}", challenger.name));
-            }
-            AttackResult::Miss { attack_roll: ar } => {
-                log.push(format!("{} rolls {ar} - Miss", challenger.name));
-            }
-        };
+        let is_killing_blow = attack_log(&mut challenger, &mut champion, &mut log);
         update_display(&champion, &challenger, &log);
-
-        if champion.current_health <= 0 {
-            log.push(format!("{} Died", champion.name));
-            update_display(&champion, &challenger, &log);
-            challenger.win();
+        if is_killing_blow {
             return challenger;
         }
     }
+}
+
+fn attack_log(attacker: &mut Goblin, defender: &mut Goblin, log: &mut Vec<String>) -> bool {
+    let result = attacker.attacks(&defender);
+    let _ = match result {
+        AttackResult::Hit {
+            attack_roll: ar,
+            damage_roll: dr,
+        } => {
+            defender.take_damage(dr);
+            log.push(format!("{} rolls {ar} - Hit for {dr}", attacker.name));
+        }
+        AttackResult::Crit { damage_roll: dr } => {
+            defender.take_damage(dr);
+            log.push(format!("{} Critical Hit! for {dr}", attacker.name));
+        }
+        AttackResult::Miss { attack_roll: ar } => {
+            log.push(format!("{} rolls {ar} - Miss", attacker.name));
+        }
+    };
+
+    if defender.current_health <= 0 {
+        log.push(format!("{} Died", defender.name));
+        attacker.win();
+        return true;
+    }
+
+    false
 }
 
 fn clear() -> () {
     print!("\x1B[2J\x1B[1;1H");
 }
 
-fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> () {
+fn pause() -> () {
     let pause_len = time::Duration::from_millis(1000);
-    let pause = || thread::sleep(pause_len);
+    thread::sleep(pause_len);
+}
+
+fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> () {
     clear();
     print_header(&champion, &challenger);
     for line in log {
