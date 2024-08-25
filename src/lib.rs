@@ -238,3 +238,24 @@ pub fn birth_goblin(name: String) -> Goblin {
         wins: 0,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dice_display() {
+        let new_dice = Dice::new(4, 4, 4).description();
+        let simple_dice = Dice::simple(4).description();
+        assert_eq!(new_dice, "4d4+4");
+        assert_eq!(simple_dice, "1d4");
+    }
+
+    #[test]
+    fn weapon_display() {
+        let base_weapon = CommonWeapon::Dagger.new(0);
+        let mod_weapon = CommonWeapon::Dagger.new(4);
+        assert_eq!(base_weapon.name(), "Dagger");
+        assert_eq!(mod_weapon.name(), "Dagger +4");
+    }
+}
