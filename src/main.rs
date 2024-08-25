@@ -87,7 +87,7 @@ fn print_header(left: &Goblin, right: &Goblin) -> () {
     println!("{:<15} |   {:<15}", fmt_wins(left), fmt_wins(right));
     println!("{:<15} |   {:<15}", fmt_hp(left), fmt_hp(right));
     println!("{:<15} |   {:<15}", fmt_def(left), fmt_def(right));
-    println!("{:<15} |   {:<15}", left.weapon.name, right.weapon.name);
+    println!("{:<15} |   {:<15}", left.weapon.name(), right.weapon.name());
     println!("{:<15} |   {:<15}", lweapon, rweapon);
     println!();
 }

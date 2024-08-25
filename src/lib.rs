@@ -52,22 +52,10 @@ impl Dice {
 
     pub fn description(self) -> String {
         let desc = self.amount.to_string() + "d" + &self.sides.to_string();
-        if self.modifier == 0 {
-            return desc;
+        if self.modifier != 0 {
+            return desc + "+" + &self.modifier.to_string();
         }
-        desc + " +" + &self.modifier.to_string()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Weapon {
-    pub name: String,
-    pub attack_dice: Dice,
-}
-
-impl Weapon {
-    fn new(name: String, attack_dice: Dice) -> Weapon {
-        Weapon { name, attack_dice }
+        desc
     }
 }
 
@@ -128,6 +116,30 @@ impl Goblin {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Weapon {
+    pub name: String,
+    pub modifier: u8,
+    pub attack_dice: Dice,
+}
+
+impl Weapon {
+    fn new(name: String, modifier: u8, attack_dice: Dice) -> Weapon {
+        Weapon {
+            name,
+            modifier,
+            attack_dice,
+        }
+    }
+
+    pub fn name(&self) -> String {
+        if self.modifier != 0 {
+            return format!("{} +{}", self.name, self.modifier);
+        }
+        self.name.clone()
+    }
+}
+
 pub enum AttackResult {
     Miss { attack_roll: u8 },
     Hit { attack_roll: u8, damage_roll: u8 },
@@ -151,14 +163,39 @@ enum CommonWeapon {
 }
 
 impl CommonWeapon {
-    fn new(self) -> Weapon {
+    fn new(self, modifier: u8) -> Weapon {
         match self {
-            CommonWeapon::Dagger => Weapon::new(String::from("Dagger"), Dice::simple(4)),
-            CommonWeapon::Shortsword => Weapon::new(String::from("Shortsword"), Dice::simple(6)),
-            CommonWeapon::Warhammer => Weapon::new(String::from("Warhammer"), Dice::simple(8)),
-            CommonWeapon::Greatsword => Weapon::new(String::from("Greatsword"), Dice::new(2, 6, 0)),
-            CommonWeapon::Halberd => Weapon::new(String::from("Halberd"), Dice::simple(10)),
-            CommonWeapon::Greataxe => Weapon::new(String::from("Greataxe"), Dice::simple(12)),
+            CommonWeapon::Dagger => {
+                Weapon::new(
+                    String::from("Dagger"), 
+                    modifier, 
+                    Dice::new(1, 4, modifier))
+            }
+            CommonWeapon::Shortsword => Weapon::new(
+                String::from("Shortsword"),
+                modifier,
+                Dice::new(1, 6, modifier),
+            ),
+            CommonWeapon::Warhammer => Weapon::new(
+                String::from("Warhammer"),
+                modifier,
+                Dice::new(1, 8, modifier),
+            ),
+            CommonWeapon::Greatsword => Weapon::new(
+                String::from("Greatsword"),
+                modifier,
+                Dice::new(2, 6, modifier),
+            ),
+            CommonWeapon::Halberd => Weapon::new(
+                String::from("Halberd"),
+                modifier,
+                Dice::new(1, 10, modifier),
+            ),
+            CommonWeapon::Greataxe => Weapon::new(
+                String::from("Greataxe"),
+                modifier,
+                Dice::new(1, 12, modifier),
+            ),
         }
     }
 }
@@ -168,14 +205,21 @@ fn random_weapon() -> Weapon {
     let dice = Dice::simple(max);
     let result = dice.roll().unwrap();
 
+    let d20 = Dice::roll_d20(&18);
+    let modifier = match d20 {
+        D20Roll::Hit(_) => Dice::simple(4).roll().unwrap(),
+        D20Roll::CriticalSuccess(_) => 5,
+        _ => 0,
+    };
+
     match result {
-        1 => CommonWeapon::Dagger.new(),
-        2 => CommonWeapon::Shortsword.new(),
-        3 => CommonWeapon::Warhammer.new(),
-        4 => CommonWeapon::Greatsword.new(),
-        5 => CommonWeapon::Halberd.new(),
-        6 => CommonWeapon::Greataxe.new(),
-        _ => CommonWeapon::Dagger.new(),
+        1 => CommonWeapon::Dagger.new(modifier),
+        2 => CommonWeapon::Shortsword.new(modifier),
+        3 => CommonWeapon::Warhammer.new(modifier),
+        4 => CommonWeapon::Greatsword.new(modifier),
+        5 => CommonWeapon::Halberd.new(modifier),
+        6 => CommonWeapon::Greataxe.new(modifier),
+        _ => CommonWeapon::Dagger.new(modifier),
     }
 }
 
