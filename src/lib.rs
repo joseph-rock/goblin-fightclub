@@ -39,9 +39,15 @@ impl Dice {
         Some(total)
     }
 
-    fn roll_d20() -> u8 {
-        let d20 = Dice::simple(20);
-        d20.roll().unwrap()
+    fn roll_d20(difficulty_score: &u8) -> D20Roll {
+        let d20_roll = Dice::simple(20).roll().unwrap();
+
+        match d20_roll {
+            1 => D20Roll::CriticalFailure(d20_roll),
+            20 => D20Roll::CriticalSuccess(d20_roll),
+            roll if roll >= *difficulty_score => D20Roll::Hit(d20_roll),
+            _ => D20Roll::Miss(d20_roll),
+        }
     }
 
     pub fn description(self) -> String {
@@ -63,6 +69,76 @@ impl Weapon {
     fn new(name: String, attack_dice: Dice) -> Weapon {
         Weapon { name, attack_dice }
     }
+}
+
+#[derive(Clone, Debug)]
+pub struct Goblin {
+    pub name: String,
+    pub max_health: u8,
+    pub current_health: i8,
+    pub weapon: Weapon,
+    pub defense: u8,
+    pub wins: u8,
+}
+
+impl Goblin {
+    pub fn attacks(&self, defender: &Goblin) -> AttackResult {
+        let attack_roll = Dice::roll_d20(&defender.defense);
+        let damage_roll = self.damage_roll();
+
+        match attack_roll {
+            D20Roll::Miss(roll) | D20Roll::CriticalFailure(roll) => {
+                AttackResult::Miss { attack_roll: roll }
+            }
+            D20Roll::Hit(roll) => AttackResult::Hit {
+                attack_roll: roll,
+                damage_roll,
+            },
+            D20Roll::CriticalSuccess(roll) => {
+                let crit_attack_roll = Dice::roll_d20(&defender.defense);
+                match crit_attack_roll {
+                    D20Roll::CriticalFailure(_) | D20Roll::Miss(_) => AttackResult::Hit {
+                        attack_roll: roll,
+                        damage_roll,
+                    },
+                    D20Roll::CriticalSuccess(_) | D20Roll::Hit(_) => {
+                        let crit_damage_roll = self.damage_roll();
+                        let total = damage_roll + crit_damage_roll;
+                        AttackResult::Crit { damage_roll: total }
+                    }
+                }
+            }
+        }
+    }
+
+    fn damage_roll(&self) -> u8 {
+        let roll = self.weapon.attack_dice.roll();
+        match roll {
+            Some(result) => result,
+            None => 1,
+        }
+    }
+
+    pub fn take_damage(&mut self, damage: u8) -> () {
+        self.current_health -= damage as i8;
+    }
+
+    pub fn win(&mut self) -> () {
+        self.wins += 1;
+    }
+}
+
+pub enum AttackResult {
+    Miss { attack_roll: u8 },
+    Hit { attack_roll: u8, damage_roll: u8 },
+    Crit { damage_roll: u8 },
+}
+
+enum D20Roll {
+    Hit(u8),
+    Miss(u8),
+    CriticalSuccess(u8),
+    CriticalFailure(u8),
 }
 
 enum CommonWeapon {
@@ -103,57 +179,6 @@ fn random_weapon() -> Weapon {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Goblin {
-    pub name: String,
-    pub max_health: u8,
-    pub current_health: i8,
-    pub weapon: Weapon,
-    pub defense: u8,
-    pub wins: u8,
-}
-
-impl Goblin {
-    pub fn attacks(&self, defender: &Goblin) -> AttackResult {
-        let attack_roll = Dice::roll_d20();
-        if attack_roll < defender.defense && attack_roll != 20 {
-            return AttackResult::Miss { attack_roll };
-        }
-
-        let damage_roll = self.damage_roll();
-
-        if attack_roll == 20 {
-            let crit_attack_roll = Dice::roll_d20();
-            if crit_attack_roll >= defender.defense || crit_attack_roll == 20 {
-                let crit_damage_roll = self.damage_roll();
-                let total = damage_roll + crit_damage_roll;
-                return AttackResult::Crit { damage_roll: total };
-            }
-        }
-
-        AttackResult::Hit {
-            attack_roll,
-            damage_roll,
-        }
-    }
-
-    fn damage_roll(&self) -> u8 {
-        let roll = self.weapon.attack_dice.roll();
-        match roll {
-            Some(result) => result,
-            None => 1,
-        }
-    }
-
-    pub fn take_damage(&mut self, damage: u8) -> () {
-        self.current_health -= damage as i8;
-    }
-
-    pub fn win(&mut self) -> () {
-        self.wins += 1;
-    }
-}
-
 pub fn birth_goblin(name: String) -> Goblin {
     let health_dice = Dice::new(2, 20, 5);
     let health = health_dice.roll().unwrap();
@@ -168,10 +193,4 @@ pub fn birth_goblin(name: String) -> Goblin {
         defense,
         wins: 0,
     }
-}
-
-pub enum AttackResult {
-    Miss { attack_roll: u8 },
-    Hit { attack_roll: u8, damage_roll: u8 },
-    Crit { damage_roll: u8 },
 }
