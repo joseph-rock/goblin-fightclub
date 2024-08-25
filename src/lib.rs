@@ -165,12 +165,11 @@ enum CommonWeapon {
 impl CommonWeapon {
     fn new(self, modifier: u8) -> Weapon {
         match self {
-            CommonWeapon::Dagger => {
-                Weapon::new(
-                    String::from("Dagger"), 
-                    modifier, 
-                    Dice::new(1, 4, modifier))
-            }
+            CommonWeapon::Dagger => Weapon::new(
+                String::from("Dagger"), 
+                modifier, 
+                Dice::new(1, 4, modifier)
+            ), 
             CommonWeapon::Shortsword => Weapon::new(
                 String::from("Shortsword"),
                 modifier,
