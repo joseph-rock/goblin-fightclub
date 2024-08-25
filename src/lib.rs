@@ -118,8 +118,8 @@ impl Goblin {
 
 #[derive(Clone, Debug)]
 pub struct Weapon {
-    pub name: String,
-    pub modifier: u8,
+    name: String,
+    modifier: u8,
     pub attack_dice: Dice,
 }
 
