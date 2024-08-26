@@ -162,6 +162,7 @@ enum CommonWeapon {
     Greataxe,
 }
 
+#[rustfmt::skip]
 impl CommonWeapon {
     fn new(self, modifier: u8) -> Weapon {
         match self {

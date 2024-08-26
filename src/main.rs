@@ -33,8 +33,10 @@ fn battle(mut champion: Goblin, generation: u8) -> Goblin {
     }
 }
 
+#[rustfmt::skip]
 fn attack_log(attacker: &mut Goblin, defender: &mut Goblin, log: &mut Vec<String>) -> bool {
     let result = attacker.attacks(&defender);
+
     let _ = match result {
         AttackResult::Hit {
             attack_roll: ar,
@@ -43,11 +45,15 @@ fn attack_log(attacker: &mut Goblin, defender: &mut Goblin, log: &mut Vec<String
             defender.take_damage(dr);
             log.push(format!("{} rolls {ar} - Hit for {dr}", attacker.name));
         }
-        AttackResult::Crit { damage_roll: dr } => {
+        AttackResult::Crit { 
+            damage_roll: dr 
+        } => {
             defender.take_damage(dr);
             log.push(format!("{} Critical Hit! for {dr}", attacker.name));
         }
-        AttackResult::Miss { attack_roll: ar } => {
+        AttackResult::Miss { 
+            attack_roll: ar 
+        } => {
             log.push(format!("{} rolls {ar} - Miss", attacker.name));
         }
     };
