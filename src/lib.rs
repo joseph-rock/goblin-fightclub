@@ -85,11 +85,11 @@ impl Goblin {
             D20Roll::CriticalSuccess(roll) => {
                 let crit_attack_roll = Dice::roll_d20(&defender.defense);
                 match crit_attack_roll {
-                    D20Roll::CriticalFailure(_) | D20Roll::Miss(_) => AttackResult::Hit {
+                    D20Roll::Miss(_) | D20Roll::CriticalFailure(_) => AttackResult::Hit {
                         attack_roll: roll,
                         damage_roll,
                     },
-                    D20Roll::CriticalSuccess(_) | D20Roll::Hit(_) => {
+                    D20Roll::Hit(_) | D20Roll::CriticalSuccess(_) => {
                         let crit_damage_roll = self.damage_roll();
                         let total = damage_roll + crit_damage_roll;
                         AttackResult::Crit { damage_roll: total }
