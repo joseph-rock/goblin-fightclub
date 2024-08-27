@@ -62,6 +62,7 @@ impl Dice {
 #[derive(Clone, Debug)]
 pub struct Goblin {
     pub name: String,
+    pub level: u8,
     pub max_health: u8,
     pub current_health: i8,
     pub weapon: Weapon,
@@ -236,14 +237,20 @@ fn random_weapon() -> Weapon {
 }
 
 pub fn birth_goblin(name: String) -> Goblin {
-    let health_dice = Dice::new(2, 20, 5);
+    // TODO: come up with a better progression system, I like using levels
+    let level = Dice::simple(4).roll().unwrap();
+
+    let health_dice = Dice::new(level, 20, level);
     let health = health_dice.roll().unwrap();
-    let defense = Dice::simple(18).roll().unwrap();
-    let weapon = random_weapon();
     let heals_available = Dice::simple(4).roll().unwrap();
+
+    // defense 6 - 18
+    let defense = Dice::new(4, 4, 2).roll().unwrap();
+    let weapon = random_weapon();
 
     Goblin {
         name,
+        level,
         max_health: health,
         current_health: health as i8,
         weapon,
