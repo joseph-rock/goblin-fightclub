@@ -82,6 +82,7 @@ fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> 
 
 #[rustfmt::skip]
 fn print_header(left: &Goblin, right: &Goblin) -> () {
+    let fmt_level = |gob: &Goblin| "Level: ".to_owned() + &gob.level.to_string();
     let fmt_wins = |gob: &Goblin| "Wins: ".to_owned() + &gob.wins.to_string();
     let fmt_hp = |gob: &Goblin| "HP: ".to_owned() + &gob.current_health.to_string() + "/" + &gob.max_health.to_string();
     let fmt_def = |gob: &Goblin| "Def: ".to_owned() + &gob.defense.to_string();
@@ -90,6 +91,7 @@ fn print_header(left: &Goblin, right: &Goblin) -> () {
     let rweapon = right.weapon.attack_dice.description();
 
     println!("{:<15} |   {:<15}", left.name, right.name);
+    println!("{:<15} |   {:<15}", fmt_level(left), fmt_level(right));
     println!("{:<15} |   {:<15}", fmt_wins(left), fmt_wins(right));
     println!("{:<15} |   {:<15}", fmt_hp(left), fmt_hp(right));
     println!("{:<15} |   {:<15}", fmt_def(left), fmt_def(right));
