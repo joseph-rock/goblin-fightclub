@@ -80,7 +80,12 @@ fn update_display(champion: &Goblin, challenger: &Goblin, log: &Vec<String>) -> 
     pause();
 }
 
+#[rustfmt::skip]
 fn print_header(left: &Goblin, right: &Goblin) -> () {
+    let fmt_wins = |gob: &Goblin| "Wins: ".to_owned() + &gob.wins.to_string();
+    let fmt_hp = |gob: &Goblin| "HP: ".to_owned() + &gob.current_health.to_string() + "/" + &gob.max_health.to_string();
+    let fmt_def = |gob: &Goblin| "Def: ".to_owned() + &gob.defense.to_string();
+    let fmt_heals = |gob: &Goblin| "Heals: ".to_owned() + &gob.heals_available.to_string();
     let lweapon = left.weapon.attack_dice.description();
     let rweapon = right.weapon.attack_dice.description();
 
@@ -92,22 +97,6 @@ fn print_header(left: &Goblin, right: &Goblin) -> () {
     println!("{:<15} |   {:<15}", left.weapon.name(), right.weapon.name());
     println!("{:<15} |   {:<15}", lweapon, rweapon);
     println!();
-}
-
-fn fmt_wins(gob: &Goblin) -> String {
-    "Wins: ".to_owned() + &gob.wins.to_string()
-}
-
-fn fmt_hp(gob: &Goblin) -> String {
-    "HP: ".to_owned() + &gob.current_health.to_string() + "/" + &gob.max_health.to_string()
-}
-
-fn fmt_def(gob: &Goblin) -> String {
-    "Def: ".to_owned() + &gob.defense.to_string()
-}
-
-fn fmt_heals(gob: &Goblin) -> String {
-    "Heals: ".to_owned() + &gob.heals_available.to_string()
 }
 
 fn clear() -> () {
