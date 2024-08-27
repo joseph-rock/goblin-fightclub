@@ -39,13 +39,14 @@ impl Dice {
         Some(total)
     }
 
-    fn roll_d20(difficulty_score: &u8) -> D20Roll {
+    fn roll_d20(ability_modifier: &u8, difficulty_score: &u8) -> D20Roll {
         let d20_roll = Dice::simple(20).roll().unwrap();
+        let total_roll = d20_roll + ability_modifier;
 
         match d20_roll {
             1 => D20Roll::CriticalFailure(d20_roll),
             20 => D20Roll::CriticalSuccess(d20_roll),
-            roll if roll >= *difficulty_score => D20Roll::Hit(d20_roll),
+            _ if total_roll >= *difficulty_score => D20Roll::Hit(total_roll),
             _ => D20Roll::Miss(d20_roll),
         }
     }
@@ -73,7 +74,7 @@ pub struct Goblin {
 
 impl Goblin {
     pub fn attacks(&self, defender: &Goblin) -> AttackResult {
-        let attack_roll = Dice::roll_d20(&defender.defense);
+        let attack_roll = Dice::roll_d20(&self.level, &defender.defense);
         let damage_roll = self.damage_roll();
 
         match attack_roll {
@@ -85,7 +86,7 @@ impl Goblin {
                 damage_roll,
             },
             D20Roll::CriticalSuccess(roll) => {
-                let crit_attack_roll = Dice::roll_d20(&defender.defense);
+                let crit_attack_roll = Dice::roll_d20(&self.level, &defender.defense);
                 match crit_attack_roll {
                     D20Roll::Miss(_) | D20Roll::CriticalFailure(_) => AttackResult::Hit {
                         attack_roll: roll,
@@ -218,7 +219,7 @@ fn random_weapon() -> Weapon {
     let dice = Dice::simple(max);
     let result = dice.roll().unwrap();
 
-    let d20 = Dice::roll_d20(&18);
+    let d20 = Dice::roll_d20(&0, &18);
     let modifier = match d20 {
         D20Roll::Hit(_) => Dice::simple(4).roll().unwrap(),
         D20Roll::CriticalSuccess(_) => 5,
@@ -240,12 +241,11 @@ pub fn birth_goblin(name: String) -> Goblin {
     // TODO: come up with a better progression system, I like using levels
     let level = Dice::simple(4).roll().unwrap();
 
-    let health_dice = Dice::new(level, 20, level);
-    let health = health_dice.roll().unwrap();
+    let health = Dice::new(level, 20, level).roll().unwrap();
     let heals_available = Dice::simple(4).roll().unwrap();
 
-    // defense 6 - 18
-    let defense = Dice::new(4, 4, 2).roll().unwrap();
+    // defense range: 4-16 + level
+    let defense = Dice::new(4, 4, level).roll().unwrap();
     let weapon = random_weapon();
 
     Goblin {
