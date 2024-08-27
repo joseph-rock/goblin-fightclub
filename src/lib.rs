@@ -67,6 +67,7 @@ pub struct Goblin {
     pub weapon: Weapon,
     pub defense: u8,
     pub wins: u8,
+    pub heals_available: u8,
 }
 
 impl Goblin {
@@ -97,6 +98,17 @@ impl Goblin {
                 }
             }
         }
+    }
+
+    pub fn heal(&mut self) -> Option<u8> {
+        if self.heals_available == 0 {
+            return None;
+        }
+
+        let d6_roll = Dice::simple(6).roll().unwrap();
+        self.heals_available -= 1;
+        self.current_health += d6_roll as i8;
+        Some(d6_roll)
     }
 
     fn damage_roll(&self) -> u8 {
@@ -228,6 +240,7 @@ pub fn birth_goblin(name: String) -> Goblin {
     let health = health_dice.roll().unwrap();
     let defense = Dice::simple(18).roll().unwrap();
     let weapon = random_weapon();
+    let heals_available = Dice::simple(4).roll().unwrap();
 
     Goblin {
         name,
@@ -236,6 +249,7 @@ pub fn birth_goblin(name: String) -> Goblin {
         weapon,
         defense,
         wins: 0,
+        heals_available,
     }
 }
 
