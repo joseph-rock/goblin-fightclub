@@ -47,7 +47,7 @@ impl Dice {
             1 => D20Roll::CriticalFailure(d20_roll),
             20 => D20Roll::CriticalSuccess(d20_roll),
             _ if total_roll >= *difficulty_score => D20Roll::Hit(total_roll),
-            _ => D20Roll::Miss(d20_roll),
+            _ => D20Roll::Miss(total_roll),
         }
     }
 
